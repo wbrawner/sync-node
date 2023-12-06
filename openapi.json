@@ -1,0 +1,597 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Sync Node",
+    "summary": "A generic sync server",
+    "description": "This is a server intended to be a generic sync target. It enables client-powered apps to simply store their data in a location that's accessible across various devices and optionally share that data with other users.",
+    "license": {
+      "name": "GNU Affero General Public License v3.0",
+      "url": "https://www.gnu.org/licenses/agpl-3.0.txt"
+    },
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/account": {
+      "get": {
+        "summary": "List current sessions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionArray"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create a new account",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Authentication"
+        },
+        "responses": {
+          "200": {
+            "description": "The account was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an account",
+        "responses": {
+          "204": {
+            "description": "The account was deleted."
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/auth": {
+      "post": {
+        "summary": "Log in as an existing user",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Authentication"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/AuthenticationSuccess"
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Log out an existing user",
+        "responses": {
+          "204": {
+            "description": "The session was invalidated."
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Check the server health",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/HealthResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/HealthResponse"
+          }
+        }
+      }
+    },
+    "/password": {
+      "post": {
+        "summary": "Update a user's password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The user's password was updated"
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/resetpassword": {
+      "post": {
+        "summary": "Request a password reset token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "A password reset request has been generated."
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/store": {
+      "get": {
+        "summary": "Retrieve a list of keys to which the user has access.",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StoreKey"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/permission/{key}": {
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "description": "The key for which to return the permissions.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Retrieve a list of users and their respective permissions for the given key",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserPermission"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      },
+      "put": {
+        "summary": "Create or update permissions for the given key",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/UserPermission"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The permissions were updated."
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete permissions for the given users",
+        "parameters": [
+          {
+            "name": "users",
+            "in": "query",
+            "description": "The user identifiers for which to remove the permissions",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The permissions were removed."
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/store/{key}": {
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "description": "The key for which to return the value.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Retrieve a value from the store by key",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Sync-Meta": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreMeta"
+                }
+              },
+              "X-Sync-Token": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreToken"
+                }
+              }
+            },
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      },
+      "put": {
+        "summary": "Create or update a value in the store by key",
+        "parameters": [
+          {
+            "name": "X-Sync-Meta",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/StoreMeta"
+            }
+          },
+          {
+            "name": "X-Sync-Token",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/StoreToken"
+            }
+          }
+        ],
+        "content": {
+          "application/octet-stream": {
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The data was updated."
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a value in the store by key",
+        "parameters": [
+          {
+            "name": "X-Sync-Token",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/StoreToken"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The data was deleted."
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "requestBodies": {
+      "Authentication": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Credentials"
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "AuthenticationSuccess": {
+        "description": "The user successfully authenticated.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Session"
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "description": "An error occurred.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "HealthResponse": {
+        "description": "The current statuses of server-side systems.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "database": {
+                  "type": "boolean",
+                  "description": "Whether or not the database is accessible"
+                },
+                "disk": {
+                  "type": "boolean",
+                  "description": "Whether or not the data directory is writeable and has sufficient free space"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Credentials": {
+        "title": "User Credentials",
+        "type": "object",
+        "description": "A credential pair used to authenticate a user.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identifier for the user."
+          },
+          "password": {
+            "type": "string",
+            "description": "The password for the user."
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "oneOf": [
+              {
+                "title": "AUTH01",
+                "const": "AUTH01",
+                "description": "The access token is missing or invalid."
+              },
+              {
+                "title": "ACCT01",
+                "const": "ACCT01",
+                "description": "Registration is disabled."
+              },
+              {
+                "title": "ACCT02",
+                "const": "ACCT02",
+                "description": "The user identifier and/or password do not meet the requirements."
+              },
+              {
+                "title": "ACCT03",
+                "const": "ACCT03",
+                "description": "The user identifier is already in use."
+              },
+              {
+                "title": "ERR01",
+                "const": "ERR01",
+                "description": "No data found for the given identifier."
+              },
+              {
+                "title": "ERR02",
+                "const": "ERR02",
+                "description": "The server encountered an unexpected error."
+              },
+              {
+                "title": "KEY01",
+                "const": "KEY01",
+                "description": "The store token is invalid or missing."
+              }
+            ]
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "Permission": {
+        "type": "string",
+        "description": "The permission granted to the user for the associated key",
+        "enum": [
+          "READ",
+          "WRITE",
+          "OWN"
+        ]
+      },
+      "ResetPasswordTokenRequest": {
+        "title": "Reset Password Token Request",
+        "type": "object",
+        "description": "A request for a token to reset the user's password.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identifier for the user."
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "Session": {
+        "title": "Session",
+        "type": "object",
+        "description": "A token and expiration date for a given session.",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "A token with which to authenticate future requests."
+          },
+          "expiration": {
+            "type": "integer",
+            "description": "A timestamp in milliseconds since Unix Epoch"
+          }
+        }
+      },
+      "SessionArray": {
+        "title": "Session",
+        "type": "array",
+        "description": "A list of currently valid sessions.",
+        "items": {
+          "$ref": "#/components/schemas/Session"
+        }
+      },
+      "StoreKey": {
+        "title": "Store Key",
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The key in the store"
+          },
+          "permission": {
+            "schema": {
+              "$ref": "#/components/schemas/Permission"
+            }
+          },
+          "token": {
+            "schema": {
+              "$ref": "#/components/schemas/StoreToken"
+            }
+          }
+        }
+      },
+      "StoreMeta": {
+        "description": "Optional metadata associated with the data",
+        "type": "string"
+      },
+      "StoreToken": {
+        "description": "A token used to denote the version of the data. Newly updated data must send the same token that the backend has stored in order for it to be udpated.",
+        "type": "string"
+      },
+      "UpdatePasswordRequest": {
+        "title": "Update Password Token Request",
+        "type": "object",
+        "description": "A request to update the user's password.",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "The new password for the user."
+          }
+        },
+        "required": [
+          "password"
+        ]
+      },
+      "UserPermission": {
+        "title": "User-Permission Mapping",
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "string",
+            "description": "The user identifier."
+          },
+          "permission": {
+            "$ref": "#/components/schemas/Permission"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
